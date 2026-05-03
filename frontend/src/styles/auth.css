@@ -1,0 +1,83 @@
+.auth-card h1 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.02em;
+}
+
+.auth-card p {
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.scroll-form {
+  max-height: 75vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.eyebrow {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.role-grid.three {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.role-choice {
+  min-height: 38px;
+  color: #94a3b8;
+  background: transparent;
+  border: 1px solid #334155;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.role-choice.compact {
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.role-choice.selected {
+  color: #06b6d4;
+  background: rgba(6, 182, 212, 0.1);
+  border-color: #06b6d4;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field button {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  background: transparent;
+  border: 0;
+  transform: translateY(-50%);
+}
+
+.full-width {
+  width: 100%;
+}
