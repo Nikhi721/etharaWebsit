@@ -16,6 +16,11 @@ const fallbackStaffLists = {
   ]
 };
 
+const adminCredentials = {
+  email: 'nikhil.k@ethara.ai',
+  password: 'password123'
+};
+
 const normalizeStaffLists = (staff = [], projects = []) => ({
   leads: staff.filter((item) => item.staffType === 'leads'),
   reviewers: staff.filter((item) => item.staffType === 'reviewers'),
@@ -26,9 +31,9 @@ const normalizeStaffLists = (staff = [], projects = []) => ({
 const App = () => {
   const [view, setView] = useState('login');
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState('Tasker');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [role, setRole] = useState('Admin');
+  const [email, setEmail] = useState(adminCredentials.email);
+  const [password, setPassword] = useState(adminCredentials.password);
   const [loginError, setLoginError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [staffLists, setStaffLists] = useState(fallbackStaffLists);
@@ -67,6 +72,20 @@ const App = () => {
     } catch {
       setTaskLog([]);
     }
+  };
+
+  const handleRoleChange = (selectedRole) => {
+    setRole(selectedRole);
+    setLoginError(false);
+
+    if (selectedRole === 'Admin') {
+      setEmail(adminCredentials.email);
+      setPassword(adminCredentials.password);
+      return;
+    }
+
+    if (email === adminCredentials.email) setEmail('');
+    if (password === adminCredentials.password) setPassword('');
   };
 
   const handleLogin = async (event) => {
@@ -205,7 +224,7 @@ const App = () => {
           password={password}
           setPassword={setPassword}
           role={role}
-          setRole={setRole}
+          setRole={handleRoleChange}
           loginError={loginError}
           showPassword={showPassword}
           setShowPassword={setShowPassword}
