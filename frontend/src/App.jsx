@@ -3,7 +3,7 @@ import LoginView from './components/auth/LoginView.jsx';
 import RegisterView from './components/auth/RegisterView.jsx';
 import AdminDashboardView from './components/admin/AdminDashboardView.jsx';
 import DashboardView from './components/dashboard/DashboardView.jsx';
-import { api } from './services/api.js';
+import { api, clearAuthToken, saveAuthToken } from './services/api.js';
 import { formatDuration, getFormattedDate, getFormattedTime } from './utils/time.js';
 
 const fallbackStaffLists = {
@@ -88,11 +88,19 @@ const App = () => {
     if (password === adminCredentials.password) setPassword('');
   };
 
+  const handleViewChange = (nextView) => {
+    if (nextView === 'login') {
+      clearAuthToken();
+      setUser(null);
+    }
+    setView(nextView);
+  };
+
   const handleLogin = async (event) => {
     event?.preventDefault();
     try {
       const response = await api.login({ email, password, role });
-      localStorage.setItem('taskTrackToken', response.token);
+      saveAuthToken(response.token);
       setUser(response.user);
       setLoginError(false);
       await loadWorkspaceData();
@@ -106,7 +114,7 @@ const App = () => {
   const handleRegister = async (formData) => {
     try {
       const response = await api.register(formData);
-      localStorage.setItem('taskTrackToken', response.token);
+      saveAuthToken(response.token);
       setUser(response.user);
       setView('dashboard');
       return { ok: true };
@@ -229,13 +237,13 @@ const App = () => {
           showPassword={showPassword}
           setShowPassword={setShowPassword}
           handleLogin={handleLogin}
-          setView={setView}
+          setView={handleViewChange}
         />
       )}
 
       {view === 'register' && (
         <RegisterView
-          setView={setView}
+          setView={handleViewChange}
           reviewers={staffLists.reviewers}
           leads={staffLists.leads}
           taskers={staffLists.taskers}
@@ -245,7 +253,7 @@ const App = () => {
 
       {view === 'admin-dashboard' && (
         <AdminDashboardView
-          setView={setView}
+          setView={handleViewChange}
           staffLists={staffLists}
           setStaffLists={setStaffLists}
           onAddStaff={handleAddStaff}
@@ -263,7 +271,7 @@ const App = () => {
           punchInDate={punchInDate}
           punchOutDate={punchOutDate}
           handlePunchToggle={handlePunchToggle}
-          setView={setView}
+          setView={handleViewChange}
           taskId={taskId}
           setTaskId={setTaskId}
           project={project}

@@ -1,6 +1,27 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const TOKEN_COOKIE_NAME = 'taskTrackToken';
+const TOKEN_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
-const getToken = () => localStorage.getItem('taskTrackToken');
+const getCookieValue = (name) =>
+  document.cookie
+    .split('; ')
+    .find((cookie) => cookie.startsWith(`${name}=`))
+    ?.split('=')
+    .slice(1)
+    .join('=');
+
+const getToken = () => getCookieValue(TOKEN_COOKIE_NAME);
+
+export const saveAuthToken = (token) => {
+  const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+  document.cookie = `${TOKEN_COOKIE_NAME}=${encodeURIComponent(token)}; Max-Age=${TOKEN_MAX_AGE_SECONDS}; Path=/; SameSite=Lax${secureFlag}`;
+  localStorage.removeItem(TOKEN_COOKIE_NAME);
+};
+
+export const clearAuthToken = () => {
+  document.cookie = `${TOKEN_COOKIE_NAME}=; Max-Age=0; Path=/; SameSite=Lax`;
+  localStorage.removeItem(TOKEN_COOKIE_NAME);
+};
 
 const request = async (path, options = {}) => {
   const headers = {
