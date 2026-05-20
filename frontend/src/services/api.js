@@ -12,6 +12,8 @@ const getCookieValue = (name) =>
 
 const getToken = () => getCookieValue(TOKEN_COOKIE_NAME);
 
+export const hasAuthToken = () => Boolean(getToken());
+
 export const saveAuthToken = (token) => {
   const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
   document.cookie = `${TOKEN_COOKIE_NAME}=${encodeURIComponent(token)}; Max-Age=${TOKEN_MAX_AGE_SECONDS}; Path=/; SameSite=Lax${secureFlag}`;

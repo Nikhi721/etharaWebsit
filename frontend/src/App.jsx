@@ -3,7 +3,7 @@ import LoginView from './components/auth/LoginView.jsx';
 import RegisterView from './components/auth/RegisterView.jsx';
 import AdminDashboardView from './components/admin/AdminDashboardView.jsx';
 import DashboardView from './components/dashboard/DashboardView.jsx';
-import { api, clearAuthToken, saveAuthToken } from './services/api.js';
+import { api, clearAuthToken, hasAuthToken, saveAuthToken } from './services/api.js';
 import { formatDuration, getFormattedDate, getFormattedTime } from './utils/time.js';
 
 const fallbackStaffLists = {
@@ -61,10 +61,6 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
-    loadWorkspaceData();
-  }, []);
-
   const loadUserTasks = async () => {
     try {
       const response = await api.getTasks();
@@ -73,6 +69,30 @@ const App = () => {
       setTaskLog([]);
     }
   };
+
+  useEffect(() => {
+    const restoreSession = async () => {
+      if (!hasAuthToken()) {
+        await loadWorkspaceData();
+        return;
+      }
+
+      try {
+        const response = await api.getMe();
+        setUser(response.user);
+        setLoginError(false);
+        await loadWorkspaceData();
+        await loadUserTasks();
+        setView(response.user.role === 'Admin' ? 'admin-dashboard' : 'dashboard');
+      } catch {
+        clearAuthToken();
+        await loadWorkspaceData();
+        setView('login');
+      }
+    };
+
+    restoreSession();
+  }, []);
 
   const handleRoleChange = (selectedRole) => {
     setRole(selectedRole);
