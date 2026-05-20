@@ -21,6 +21,9 @@ const adminCredentials = {
   password: 'password123'
 };
 
+const SESSION_CACHE_KEY = 'taskTrackSession';
+const SESSION_CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+
 const normalizeStaffLists = (staff = [], projects = []) => ({
   leads: staff.filter((item) => item.staffType === 'leads'),
   reviewers: staff.filter((item) => item.staffType === 'reviewers'),
@@ -28,9 +31,42 @@ const normalizeStaffLists = (staff = [], projects = []) => ({
   projects: projects.length ? projects : fallbackStaffLists.projects
 });
 
+const getCachedSession = () => {
+  if (!hasAuthToken()) return null;
+
+  try {
+    const cached = JSON.parse(localStorage.getItem(SESSION_CACHE_KEY));
+    if (!cached?.user || !cached?.view || cached.expiresAt <= Date.now()) {
+      localStorage.removeItem(SESSION_CACHE_KEY);
+      return null;
+    }
+    return cached;
+  } catch {
+    localStorage.removeItem(SESSION_CACHE_KEY);
+    return null;
+  }
+};
+
+const saveSessionCache = (user, view) => {
+  localStorage.setItem(
+    SESSION_CACHE_KEY,
+    JSON.stringify({
+      user,
+      view,
+      expiresAt: Date.now() + SESSION_CACHE_DURATION_MS
+    })
+  );
+};
+
+const clearSessionCache = () => {
+  localStorage.removeItem(SESSION_CACHE_KEY);
+};
+
 const App = () => {
-  const [view, setView] = useState('login');
-  const [user, setUser] = useState(null);
+  const [cachedSession] = useState(getCachedSession);
+  const [view, setView] = useState(cachedSession?.view || 'login');
+  const [isRestoringSession, setIsRestoringSession] = useState(!cachedSession);
+  const [user, setUser] = useState(cachedSession?.user || null);
   const [role, setRole] = useState('Admin');
   const [email, setEmail] = useState(adminCredentials.email);
   const [password, setPassword] = useState(adminCredentials.password);
@@ -74,6 +110,7 @@ const App = () => {
     const restoreSession = async () => {
       if (!hasAuthToken()) {
         await loadWorkspaceData();
+        setIsRestoringSession(false);
         return;
       }
 
@@ -83,11 +120,16 @@ const App = () => {
         setLoginError(false);
         await loadWorkspaceData();
         await loadUserTasks();
-        setView(response.user.role === 'Admin' ? 'admin-dashboard' : 'dashboard');
+        const nextView = cachedSession?.view || (response.user.role === 'Admin' ? 'admin-dashboard' : 'dashboard');
+        setView(nextView);
+        saveSessionCache(response.user, nextView);
       } catch {
         clearAuthToken();
+        clearSessionCache();
         await loadWorkspaceData();
         setView('login');
+      } finally {
+        setIsRestoringSession(false);
       }
     };
 
@@ -111,7 +153,10 @@ const App = () => {
   const handleViewChange = (nextView) => {
     if (nextView === 'login') {
       clearAuthToken();
+      clearSessionCache();
       setUser(null);
+    } else if (user) {
+      saveSessionCache(user, nextView);
     }
     setView(nextView);
   };
@@ -125,7 +170,9 @@ const App = () => {
       setLoginError(false);
       await loadWorkspaceData();
       await loadUserTasks();
-      setView(response.user.role === 'Admin' ? 'admin-dashboard' : 'dashboard');
+      const nextView = response.user.role === 'Admin' ? 'admin-dashboard' : 'dashboard';
+      saveSessionCache(response.user, nextView);
+      setView(nextView);
     } catch {
       setLoginError(true);
     }
@@ -136,6 +183,7 @@ const App = () => {
       const response = await api.register(formData);
       saveAuthToken(response.token);
       setUser(response.user);
+      saveSessionCache(response.user, 'dashboard');
       setView('dashboard');
       return { ok: true };
     } catch (error) {
@@ -242,6 +290,24 @@ const App = () => {
     setScreenshot(null);
     setJustification('');
   };
+
+  if (isRestoringSession) {
+    return (
+      <div className="app-shell">
+        <div className="auth-page">
+          <div className="auth-card">
+            <div className="logo-row">
+              <div className="logo-mark">TT</div>
+              <div>
+                <h1>Task Track</h1>
+                <p className="muted">Checking session...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="app-shell">
